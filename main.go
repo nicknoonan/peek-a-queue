@@ -16,20 +16,6 @@ type styles struct {
 	statusMessage lipgloss.Style
 }
 
-func newStyles(darkBG bool) styles {
-	lightDark := lipgloss.LightDark(darkBG)
-
-	return styles{
-		app: lipgloss.NewStyle().
-			Padding(1, 2),
-		title: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FFFDF5")).
-			Background(lipgloss.Color("#25A065")).
-			Padding(0, 1),
-		statusMessage: lipgloss.NewStyle().
-			Foreground(lightDark(lipgloss.Color("#04B575"), lipgloss.Color("#04B575"))),
-	}
-}
 
 func (m model) Init() tea.Cmd {
 	return tea.Batch(

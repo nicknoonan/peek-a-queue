@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
-	// "sync"
 	"time"
 
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
 	"github.com/aws/aws-sdk-go-v2/config"
+	"charm.land/lipgloss/v2"
 )
 
 type model struct {
@@ -61,6 +61,22 @@ func newListKeyMap() *listKeyMap {
 			key.WithKeys("r"),
 			key.WithHelp("r", "refresh page"),
 		),
+	}
+}
+
+
+func newStyles(darkBG bool) styles {
+	lightDark := lipgloss.LightDark(darkBG)
+
+	return styles{
+		app: lipgloss.NewStyle().
+			Padding(1, 2),
+		title: lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FFFDF5")).
+			Background(lipgloss.Color("#25A065")).
+			Padding(0, 1),
+		statusMessage: lipgloss.NewStyle().
+			Foreground(lightDark(lipgloss.Color("#04B575"), lipgloss.Color("#04B575"))),
 	}
 }
 
