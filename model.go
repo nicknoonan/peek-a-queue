@@ -16,10 +16,8 @@ type model struct {
 	styles        styles
 	darkBG        bool
 	width, height int
-	// list          list.Model
 	list          *listModel
 	keys          *listKeyMap
-	// delegateKeys  *delegateKeyMap
 }
 
 type listKeyMap struct {
@@ -85,7 +83,6 @@ func initialModel(ctx context.Context) (*model, error) {
 	}
 	m.styles = newStyles(false) // default to dark background styles
 
-	// delegateKeys := newDelegateKeyMap()
 	listKeys := newListKeyMap()
 
 	// Make initial list of items.
@@ -98,7 +95,6 @@ func initialModel(ctx context.Context) (*model, error) {
 	}
 
 	// Setup list.
-	// delegate := newItemDelegate(ctx, &awsClient, delegateKeys, &m.styles)
 	queueList := list.New(items, list.NewDefaultDelegate(), 0, 0)
 	queueList.Title = "Queues"
 	queueList.Styles.Title = m.styles.title
@@ -127,7 +123,6 @@ func initialModel(ctx context.Context) (*model, error) {
 		styles: &m.styles,
 	}
 	m.keys = listKeys
-	// m.delegateKeys = delegateKeys
 
 	return &m, nil
 }
