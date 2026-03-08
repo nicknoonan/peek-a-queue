@@ -71,11 +71,16 @@ peek-a-queue
 
 ## Screenshots
 
-Pagination and filtering example:
+### Pagination and filtering example:
+- Use arrow keys to navigate pages of queues.
+- Use `/` to filter visible queues.
 
 ![Peek-a-Queue pagination and filtering](assets/pickaqueue.gif)
 
-Refresh example:
+### Refresh example:
+- Press `enter` to refresh a selected queue
+- Press `r` to refresh an entire page of queues
+
 ![Peek-a-Queue refreshing example](assets/refreshexample.gif)
 
 
