@@ -11,17 +11,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
-
 type model struct {
-	awsClient AWSClient
+	awsClient     AWSClient
 	styles        styles
 	darkBG        bool
 	width, height int
-	list          list.Model
+	// list          list.Model
+	list          *listModel
 	keys          *listKeyMap
-	delegateKeys  *delegateKeyMap
+	// delegateKeys  *delegateKeyMap
 }
-
 
 type listKeyMap struct {
 	toggleSpinner    key.Binding
@@ -30,6 +29,8 @@ type listKeyMap struct {
 	togglePagination key.Binding
 	toggleHelpMenu   key.Binding
 	insertItem       key.Binding
+	refreshItem	     key.Binding
+	refreshPage      key.Binding
 }
 
 func newListKeyMap() *listKeyMap {
@@ -54,6 +55,14 @@ func newListKeyMap() *listKeyMap {
 			key.WithKeys("H"),
 			key.WithHelp("H", "toggle help"),
 		),
+		refreshItem: key.NewBinding(
+			key.WithKeys("enter"),
+			key.WithHelp("enter", "refresh item"),
+		),
+		refreshPage: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "refresh page"),
+		),
 	}
 }
 
@@ -76,7 +85,7 @@ func initialModel(ctx context.Context) (*model, error) {
 	}
 	m.styles = newStyles(false) // default to dark background styles
 
-	delegateKeys := newDelegateKeyMap()
+	// delegateKeys := newDelegateKeyMap()
 	listKeys := newListKeyMap()
 
 	// Make initial list of items.
@@ -84,15 +93,21 @@ func initialModel(ctx context.Context) (*model, error) {
 	for i := range len(queueURLs) {
 		items[i] = item{
 			name: queueNameFromURL(queueURLs[i]),
-			url: queueURLs[i],
+			url:  queueURLs[i],
 		}
 	}
 
 	// Setup list.
-	delegate := newItemDelegate(ctx, &awsClient, delegateKeys, &m.styles)
-	queueList := list.New(items, delegate, 0, 0)
+	// delegate := newItemDelegate(ctx, &awsClient, delegateKeys, &m.styles)
+	queueList := list.New(items, list.NewDefaultDelegate(), 0, 0)
 	queueList.Title = "Queues"
 	queueList.Styles.Title = m.styles.title
+	queueList.AdditionalShortHelpKeys = func() []key.Binding {
+		return []key.Binding{
+			listKeys.refreshItem,
+			listKeys.refreshPage,
+		}
+	}
 	queueList.AdditionalFullHelpKeys = func() []key.Binding {
 		return []key.Binding{
 			listKeys.toggleSpinner,
@@ -101,12 +116,18 @@ func initialModel(ctx context.Context) (*model, error) {
 			listKeys.toggleStatusBar,
 			listKeys.togglePagination,
 			listKeys.toggleHelpMenu,
+			listKeys.refreshItem,
+			listKeys.refreshPage,
 		}
 	}
 
-	m.list = queueList
+	m.list = &listModel{
+		bubbleListModel: &queueList,
+		awsClient: &awsClient,
+		styles: &m.styles,
+	}
 	m.keys = listKeys
-	m.delegateKeys = delegateKeys
+	// m.delegateKeys = delegateKeys
 
 	return &m, nil
 }
@@ -118,13 +139,13 @@ func (m *model) updateListProperties() {
 
 	// Update the model and list styles.
 	m.styles = newStyles(m.darkBG)
-	m.list.Styles.Title = m.styles.title
+	m.list.SetTitleStyle(m.styles.title)
 }
 
 type tickMsg time.Time
 
 func doTick() tea.Cmd {
-	return tea.Tick(10 * time.Second, func(t time.Time) tea.Msg {
+	return tea.Tick(10*time.Second, func(t time.Time) tea.Msg {
 		return tickMsg(t)
 	})
 }
@@ -132,7 +153,7 @@ func doTick() tea.Cmd {
 type initialLoadMsg string
 
 func doInitialLoad() tea.Cmd {
-	return func() tea.Msg{
+	return func() tea.Msg {
 		return initialLoadMsg("")
 	}
 }
@@ -142,12 +163,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case tickMsg:
-		cmds = append(cmds, 
-			loadPageAttributes(context.TODO(), &m.list, &m.styles, &m.awsClient, m.list.VisibleItems()...),
+		cmds = append(cmds,
+			m.list.loadPageAttributes(context.TODO(), m.list.VisibleItems()...),
 			doTick(),
 		)
 	case initialLoadMsg:
-		cmds = append(cmds, loadPageAttributes(context.TODO(), &m.list, &m.styles, &m.awsClient, m.list.VisibleItems()...))
+		newListModel, cmd := m.list.Update(msg)
+		m.list = &newListModel
+		cmds = append(cmds, cmd, m.list.loadPageAttributes(context.TODO(), m.list.VisibleItems()...))
 	case tea.BackgroundColorMsg:
 		m.darkBG = msg.IsDark()
 		m.updateListProperties()
@@ -171,8 +194,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.err != nil {
 			return m, m.list.NewStatusMessage(m.styles.statusMessage.Render("error: " + msg.err.Error()))
 		}
-		
-		cmds = append(cmds, setItemsCmd(&m.list, msg.setItems))
+
+		cmds = append(cmds, m.list.setItemsBatchCmd(msg.batch))
 	case tea.KeyPressMsg:
 		// Don't match any of the keys below if we're actively filtering.
 		if m.list.FilterState() == list.Filtering {
@@ -191,6 +214,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.list.SetFilteringEnabled(v)
 			return m, nil
 
+		case key.Matches(msg, m.keys.refreshItem):
+			cmds = append(cmds, m.list.loadPageAttributes(context.TODO(), m.list.SelectedItem()))
+		case key.Matches(msg, m.keys.refreshPage):
+			cmds = append(cmds, m.list.loadPageAttributes(context.TODO(), m.list.VisibleItems()...))
+	
 		case key.Matches(msg, m.keys.toggleStatusBar):
 			m.list.SetShowStatusBar(!m.list.ShowStatusBar())
 			return m, nil
@@ -207,7 +235,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	// This will also call our delegate's update function.
 	newListModel, cmd := m.list.Update(msg)
-	m.list = newListModel
+	m.list = &newListModel
 	cmds = append(cmds, cmd)
 
 	return m, tea.Batch(cmds...)

@@ -6,18 +6,16 @@ import (
 	"strings"
 	"sync"
 
+	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
 	"github.com/aws/aws-sdk-go-v2/aws"
-
-	// "github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
-	"charm.land/bubbles/v2/list"
 )
 
 type AWSClient struct {
 	sqsClient sqs.Client
-	config *aws.Config
+	config    *aws.Config
 }
 
 func NewAWSClient(config aws.Config) AWSClient {
@@ -25,7 +23,7 @@ func NewAWSClient(config aws.Config) AWSClient {
 
 	return AWSClient{
 		sqsClient: *sqsClient,
-		config: &config,
+		config:    &config,
 	}
 }
 
@@ -97,7 +95,7 @@ func (client AWSClient) GetQueueAttributesBatch(ctx context.Context, queueUrls [
 	}
 
 	if len(errors) > 0 {
-		// In a real application, you might want more sophisticated error handling, 
+		// In a real application, you might want more sophisticated error handling,
 		// but for a simple example, return the first error encountered.
 		return combinedResults, <-errors
 	}
@@ -107,18 +105,18 @@ func (client AWSClient) GetQueueAttributesBatch(ctx context.Context, queueUrls [
 
 func queueNameFromURL(url string) string {
 	parts := strings.Split(url, "/")
-	
-	return parts[len(parts) - 1]
+
+	return parts[len(parts)-1]
 }
 
 type queueAttributesMsg struct {
-	setItems []setItemInput
-	err error
+	batch []batchItem
+	err   error
 }
 
 func (client AWSClient) GetQueueAttributesCmd(ctx context.Context, allItems []list.Item, visibleItems []list.Item) tea.Cmd {
 	return func() tea.Msg {
-		var setItems []setItemInput
+		var batch []batchItem
 		indexMap := make(map[string]int)
 
 		for i, cur := range allItems {
@@ -130,7 +128,7 @@ func (client AWSClient) GetQueueAttributesCmd(ctx context.Context, allItems []li
 			curItem := listItem.(item)
 			return curItem.url
 		})
-		
+
 		attributes, err := client.GetQueueAttributesBatch(ctx, urls, []types.QueueAttributeName{types.QueueAttributeNameApproximateNumberOfMessages})
 		if err != nil {
 			return queueAttributesMsg{
@@ -142,12 +140,12 @@ func (client AWSClient) GetQueueAttributesCmd(ctx context.Context, allItems []li
 			cur := cur.(item)
 			cur.lengthString = attributes[cur.url][string(types.QueueAttributeNameApproximateNumberOfMessages)]
 
-			setItems = append(setItems, setItemInput{
-				index: indexMap[cur.url],
+			batch = append(batch, batchItem{
+				index:   indexMap[cur.url],
 				setItem: cur,
 			})
 		}
 
-		return queueAttributesMsg{setItems: setItems}
+		return queueAttributesMsg{batch: batch}
 	}
 }
