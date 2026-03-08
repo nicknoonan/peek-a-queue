@@ -95,7 +95,7 @@ func initialModel(ctx context.Context) (*model, error) {
 	}
 
 	// Setup list.
-	queueList := list.New(items, list.NewDefaultDelegate(), 0, 0)
+	queueList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	queueList.Title = "Queues"
 	queueList.Styles.Title = m.styles.title
 	queueList.AdditionalShortHelpKeys = func() []key.Binding {
@@ -153,6 +153,18 @@ func doInitialLoad() tea.Cmd {
 	}
 }
 
+func (m model) initialLoad(msg tea.Msg) tea.Cmd {
+	var cmds []tea.Cmd
+
+	newListModel, cmd := m.list.Update(msg)
+	m.list = &newListModel
+	cmds = append(cmds, cmd, m.list.loadPageAttributes(context.TODO(), m.list.VisibleItems()...))
+
+	cmds = append(cmds, m.list.StartSpinner())
+	
+	return tea.Batch(cmds...)
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
@@ -163,9 +175,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			doTick(),
 		)
 	case initialLoadMsg:
-		newListModel, cmd := m.list.Update(msg)
-		m.list = &newListModel
-		cmds = append(cmds, cmd, m.list.loadPageAttributes(context.TODO(), m.list.VisibleItems()...))
+		cmds = append(cmds, m.list.StartSpinner(), m.awsClient.ListAllQueuesCmd(context.TODO()))
+	case queueListMsg:
+		m.list.StopSpinner()
+		cmds = append(cmds, m.list.SetItems(msg))
 	case tea.BackgroundColorMsg:
 		m.darkBG = msg.IsDark()
 		m.updateListProperties()

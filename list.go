@@ -84,6 +84,10 @@ func (lm *listModel) SetItem(index int, listItem list.Item) tea.Cmd {
 	return lm.bubbleListModel.SetItem(index, listItem)
 }
 
+func (lm *listModel) SetItems(listItems []list.Item) tea.Cmd {
+	return lm.bubbleListModel.SetItems(listItems)
+}
+
 func (lm *listModel) FilterState() list.FilterState {
 	return lm.bubbleListModel.FilterState()
 }
@@ -156,6 +160,10 @@ func (lm *listModel) setItemsBatchCmd(setItemsList []batchItem) tea.Cmd {
 }
 
 func (lm *listModel) loadPageAttributes(ctx context.Context, listItems ...list.Item) tea.Cmd {
+	if len(listItems) == 0 || (len(listItems) == 1 && listItems[0] == nil) {
+		return nil
+	}
+	
 	var cmds []tea.Cmd
 
 	cmds = append(cmds, 

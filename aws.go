@@ -52,6 +52,30 @@ func (client AWSClient) ListAllQueues(ctx context.Context) ([]string, error) {
 	return queueUrls, nil
 }
 
+type queueListMsg []list.Item
+
+func (client AWSClient) ListAllQueuesCmd(ctx context.Context) tea.Cmd {
+	return func() tea.Msg {
+		queueUrls, err := client.ListAllQueues(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to list queues: %w", err)
+		}
+
+		attributes, err := client.GetQueueAttributesBatch(ctx, queueUrls, []types.QueueAttributeName{types.QueueAttributeNameApproximateNumberOfMessages, types.QueueAttributeNameApproximateNumberOfMessagesNotVisible})
+
+		items := Map(queueUrls, func(url string) list.Item {
+			return item{
+				name: queueNameFromURL(url),
+				url: url,
+				available: attributes[url][string(types.QueueAttributeNameApproximateNumberOfMessages)],
+				inFlight: attributes[url][string(types.QueueAttributeNameApproximateNumberOfMessagesNotVisible)],
+			}
+		})
+
+		return queueListMsg(items)
+	}
+}
+
 // GetQueueAttributesBatch retrieves attributes for multiple queues concurrently.
 func (client AWSClient) GetQueueAttributesBatch(ctx context.Context, queueUrls []string, attributeNames []types.QueueAttributeName) (map[string]map[string]string, error) {
 	var wg sync.WaitGroup
