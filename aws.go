@@ -61,14 +61,10 @@ func (client AWSClient) ListAllQueuesCmd(ctx context.Context) tea.Cmd {
 			return fmt.Errorf("failed to list queues: %w", err)
 		}
 
-		attributes, err := client.GetQueueAttributesBatch(ctx, queueUrls, []types.QueueAttributeName{types.QueueAttributeNameApproximateNumberOfMessages, types.QueueAttributeNameApproximateNumberOfMessagesNotVisible})
-
 		items := Map(queueUrls, func(url string) list.Item {
 			return item{
 				name: queueNameFromURL(url),
-				url: url,
-				available: attributes[url][string(types.QueueAttributeNameApproximateNumberOfMessages)],
-				inFlight: attributes[url][string(types.QueueAttributeNameApproximateNumberOfMessagesNotVisible)],
+				url:  url,
 			}
 		})
 

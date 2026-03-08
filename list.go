@@ -11,16 +11,16 @@ import (
 
 type listModel struct {
 	bubbleListModel *list.Model
-	awsClient *AWSClient
-	styles *styles
+	awsClient       *AWSClient
+	styles          *styles
 }
 
 func (lm *listModel) Update(msg tea.Msg) (listModel, tea.Cmd) {
 	bubbleListModel, cmd := lm.bubbleListModel.Update(msg)
 	return listModel{
 		bubbleListModel: &bubbleListModel,
-		awsClient: lm.awsClient,
-		styles: lm.styles,
+		awsClient:       lm.awsClient,
+		styles:          lm.styles,
 	}, cmd
 }
 
@@ -163,10 +163,10 @@ func (lm *listModel) loadPageAttributes(ctx context.Context, listItems ...list.I
 	if len(listItems) == 0 || (len(listItems) == 1 && listItems[0] == nil) {
 		return nil
 	}
-	
+
 	var cmds []tea.Cmd
 
-	cmds = append(cmds, 
+	cmds = append(cmds,
 		lm.StartSpinner(),
 		lm.awsClient.GetQueueAttributesCmd(ctx, lm.Items(), listItems),
 	)

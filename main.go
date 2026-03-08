@@ -16,7 +16,6 @@ type styles struct {
 	statusMessage lipgloss.Style
 }
 
-
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		tea.RequestBackgroundColor,

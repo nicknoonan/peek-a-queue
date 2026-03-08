@@ -7,8 +7,8 @@ import (
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
-	"github.com/aws/aws-sdk-go-v2/config"
 	"charm.land/lipgloss/v2"
+	"github.com/aws/aws-sdk-go-v2/config"
 )
 
 type model struct {
@@ -63,7 +63,6 @@ func newListKeyMap() *listKeyMap {
 		),
 	}
 }
-
 
 func newStyles(darkBG bool) styles {
 	lightDark := lipgloss.LightDark(darkBG)
@@ -179,10 +178,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			refreshTick(),
 		)
 	case initialLoadMsg:
-		cmds = append(cmds, m.list.StartSpinner(), m.awsClient.ListAllQueuesCmd(context.TODO()))
+		cmds = append(cmds,
+			m.list.StartSpinner(),
+			m.awsClient.ListAllQueuesCmd(context.TODO()),
+		)
 	case queueListMsg:
 		m.list.StopSpinner()
-		cmds = append(cmds, m.list.SetItems(msg))
+		cmds = append(cmds,
+			m.list.SetItems(msg),
+			m.awsClient.GetQueueAttributesCmd(context.TODO(), msg, msg),
+		)
 	case tea.BackgroundColorMsg:
 		m.darkBG = msg.IsDark()
 		m.updateListProperties()
