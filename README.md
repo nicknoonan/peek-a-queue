@@ -60,7 +60,7 @@ peek-a-queue
 
 Drop your screenshots into the repo and replace these placeholders:
 
-![Peek-a-Queue main screen - placeholder](assets/pickqueue.gif)
+![Peek-a-Queue main screen - placeholder](assets/pickaqueue.gif)
 *(Replace with a screenshot of the main UI)*
 
 
