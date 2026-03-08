@@ -148,6 +148,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width, m.height = msg.Width, msg.Height
 		m.updateListProperties()
 		return m, nil
+	case queueAttributesMsg:
+		m.list.StopSpinner()
+
+		if m.list.IsFiltered() {
+			currentFilter := m.list.FilterValue()
+			currentIndex := m.list.Index()
+			m.list.ResetFilter()
+			m.list.SetFilterText(currentFilter)
+			m.list.Select(currentIndex)
+		}
+
+		if msg.err != nil {
+			return m, m.list.NewStatusMessage(m.styles.statusMessage.Render("error: " + msg.err.Error()))
+		}
+		
+		cmds = append(cmds, setItemsCmd(&m.list, msg.setItems))
 	case tea.KeyPressMsg:
 		// Don't match any of the keys below if we're actively filtering.
 		if m.list.FilterState() == list.Filtering {

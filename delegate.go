@@ -14,15 +14,17 @@ type setItemInput struct {
 }
 
 func setItemsCmd(listModel *list.Model, setItemsList []setItemInput) tea.Cmd {
-	return func() tea.Msg {
-		var cmds []tea.Cmd
-
-		for _, setItem := range setItemsList {
-			cmds = append(cmds, listModel.SetItem(setItem.index, setItem.setItem))
-		}
-
-		return tea.Batch(cmds...)
-	}
+	return tea.Batch(
+		func() tea.Msg {
+			var cmds []tea.Cmd
+	
+			for _, setItem := range setItemsList {
+				cmds = append(cmds, listModel.SetItem(setItem.index, setItem.setItem))
+			}
+	
+			return tea.Batch(cmds...)
+		},
+	)
 }
 
 func loadPageAttributes(ctx context.Context, model *model, listModel *list.Model, styles *styles, awsClient *AWSClient, listItems ...list.Item) tea.Cmd {
@@ -46,12 +48,6 @@ func newItemDelegate(ctx context.Context, model *model, awsClient *AWSClient, ke
 
 	d.UpdateFunc = func(msg tea.Msg, listModel *list.Model) tea.Cmd {
 		switch msg := msg.(type) {
-		case queueAttributesMsg:
-			listModel.StopSpinner()
-			if msg.err != nil {
-				return listModel.NewStatusMessage(styles.statusMessage.Render("error: " + msg.err.Error()))
-			}
-			return setItemsCmd(listModel, msg.setItems)
 		case tea.KeyPressMsg:
 			switch {
 			case key.Matches(msg, keys.choose):
