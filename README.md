@@ -60,16 +60,11 @@ peek-a-queue
 
 Drop your screenshots into the repo and replace these placeholders:
 
-![Peek-a-Queue main screen - placeholder](assets/screenshot-main.png)
+![Peek-a-Queue main screen - placeholder](assets/pickqueue.gif)
 *(Replace with a screenshot of the main UI)*
 
-![Peek-a-Queue attributes - placeholder](assets/screenshot-attrs.png)
-*(Replace with a screenshot showing loaded queue attributes)*
 
 ## Contributing
 Bugs, features, and parade floats welcome. Open an issue or send a PR. Keep it small, keep it kind, and maybe include a gif.
 
-## License
-Pick a license, any license. (Add actual license text or file here.)
-
-Happy queue peeking! 👀🚀
+## Happy queue peeking! 👀🚀
