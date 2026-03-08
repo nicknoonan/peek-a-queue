@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
@@ -33,11 +34,10 @@ func newStyles(darkBG bool) styles {
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		tea.RequestBackgroundColor,
-		doTick(),
-		doInitialLoad(),
+		refreshTick(),
+		initialLoad(),
 	)
 }
-
 
 func main() {
 	ctx := context.Background()

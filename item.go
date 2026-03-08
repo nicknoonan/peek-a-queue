@@ -2,10 +2,6 @@ package main
 
 import "fmt"
 
-// import (
-// 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-// )
-
 type item struct {
 	name      string
 	available string

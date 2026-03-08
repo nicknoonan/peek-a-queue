@@ -171,9 +171,14 @@ func (lm *listModel) loadPageAttributes(ctx context.Context, listItems ...list.I
 		lm.awsClient.GetQueueAttributesCmd(ctx, lm.Items(), listItems),
 	)
 
-	if lm.styles != nil {
-		cmds = append(cmds, lm.NewStatusMessage(lm.styles.statusMessage.Render("refreshing...")))
+	statusMessage := "refreshing page..."
+
+	if len(listItems) == 1 {
+		curItem := listItems[0].(item)
+		statusMessage = "refreshing " + curItem.name + "..."
 	}
+
+	cmds = append(cmds, lm.NewStatusMessage(lm.styles.statusMessage.Render(statusMessage)))
 
 	return tea.Batch(cmds...)
 }

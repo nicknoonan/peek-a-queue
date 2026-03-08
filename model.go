@@ -27,7 +27,7 @@ type listKeyMap struct {
 	togglePagination key.Binding
 	toggleHelpMenu   key.Binding
 	insertItem       key.Binding
-	refreshItem	     key.Binding
+	refreshItem      key.Binding
 	refreshPage      key.Binding
 }
 
@@ -119,8 +119,8 @@ func initialModel(ctx context.Context) (*model, error) {
 
 	m.list = &listModel{
 		bubbleListModel: &queueList,
-		awsClient: &awsClient,
-		styles: &m.styles,
+		awsClient:       &awsClient,
+		styles:          &m.styles,
 	}
 	m.keys = listKeys
 
@@ -137,42 +137,30 @@ func (m *model) updateListProperties() {
 	m.list.SetTitleStyle(m.styles.title)
 }
 
-type tickMsg time.Time
+type refreshTickMsg time.Time
 
-func doTick() tea.Cmd {
+func refreshTick() tea.Cmd {
 	return tea.Tick(10*time.Second, func(t time.Time) tea.Msg {
-		return tickMsg(t)
+		return refreshTickMsg(t)
 	})
 }
 
 type initialLoadMsg string
 
-func doInitialLoad() tea.Cmd {
+func initialLoad() tea.Cmd {
 	return func() tea.Msg {
 		return initialLoadMsg("")
 	}
-}
-
-func (m model) initialLoad(msg tea.Msg) tea.Cmd {
-	var cmds []tea.Cmd
-
-	newListModel, cmd := m.list.Update(msg)
-	m.list = &newListModel
-	cmds = append(cmds, cmd, m.list.loadPageAttributes(context.TODO(), m.list.VisibleItems()...))
-
-	cmds = append(cmds, m.list.StartSpinner())
-	
-	return tea.Batch(cmds...)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case tickMsg:
+	case refreshTickMsg:
 		cmds = append(cmds,
 			m.list.loadPageAttributes(context.TODO(), m.list.VisibleItems()...),
-			doTick(),
+			refreshTick(),
 		)
 	case initialLoadMsg:
 		cmds = append(cmds, m.list.StartSpinner(), m.awsClient.ListAllQueuesCmd(context.TODO()))
@@ -226,7 +214,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			cmds = append(cmds, m.list.loadPageAttributes(context.TODO(), m.list.SelectedItem()))
 		case key.Matches(msg, m.keys.refreshPage):
 			cmds = append(cmds, m.list.loadPageAttributes(context.TODO(), m.list.VisibleItems()...))
-	
+
 		case key.Matches(msg, m.keys.toggleStatusBar):
 			m.list.SetShowStatusBar(!m.list.ShowStatusBar())
 			return m, nil
