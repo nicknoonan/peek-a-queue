@@ -58,10 +58,12 @@ peek-a-queue
 
 ## Screenshots
 
-Drop your screenshots into the repo and replace these placeholders:
+Pagination and filtering example:
 
-![Peek-a-Queue main screen - placeholder](assets/pickaqueue.gif)
-*(Replace with a screenshot of the main UI)*
+![Peek-a-Queue pagination and filtering](assets/pickaqueue.gif)
+
+Refresh example:
+![Peek-a-Queue refreshing example](assets/refreshexample.gif)
 
 
 ## Contributing
