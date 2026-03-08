@@ -27,23 +27,15 @@ func setItemsCmd(listModel *list.Model, setItemsList []setItemInput) tea.Cmd {
 	)
 }
 
-func loadPageAttributes(ctx context.Context, model *model, listModel *list.Model, styles *styles, awsClient *AWSClient, listItems ...list.Item) tea.Cmd {
+func loadPageAttributes(ctx context.Context, listModel *list.Model, styles *styles, awsClient *AWSClient, listItems ...list.Item) tea.Cmd {
 	return tea.Batch(
-		func() tea.Msg{
-			model.isLoading.Set(true)
-			return nil
-		},
 		listModel.StartSpinner(),
 		listModel.NewStatusMessage(styles.statusMessage.Render("refreshing...")),
 		awsClient.GetQueueAttributesCmd(ctx, listModel.Items(), listItems),
-		func() tea.Msg{
-			model.isLoading.Set(false)
-			return nil
-		},
 	)
 }
 
-func newItemDelegate(ctx context.Context, model *model, awsClient *AWSClient, keys *delegateKeyMap, styles *styles) list.DefaultDelegate {
+func newItemDelegate(ctx context.Context, awsClient *AWSClient, keys *delegateKeyMap, styles *styles) list.DefaultDelegate {
 	d := list.NewDefaultDelegate()
 
 	d.UpdateFunc = func(msg tea.Msg, listModel *list.Model) tea.Cmd {
@@ -51,18 +43,9 @@ func newItemDelegate(ctx context.Context, model *model, awsClient *AWSClient, ke
 		case tea.KeyPressMsg:
 			switch {
 			case key.Matches(msg, keys.choose):
-				return loadPageAttributes(ctx, model, listModel, styles, awsClient, listModel.SelectedItem())
+				return loadPageAttributes(ctx, listModel, styles, awsClient, listModel.SelectedItem())
 			case key.Matches(msg, keys.refresh):
-				return loadPageAttributes(ctx, model, listModel, styles, awsClient, listModel.VisibleItems()...)
-			}
-		}
-
-		if !model.isLoading.Get() {
-			for _, curItem := range listModel.VisibleItems() {
-				curItem := curItem.(item)
-				if curItem.lengthString == "" {
-					return loadPageAttributes(ctx, model, listModel, styles, awsClient, listModel.VisibleItems()...)
-				}
+				return loadPageAttributes(ctx, listModel, styles, awsClient, listModel.VisibleItems()...)
 			}
 		}
 

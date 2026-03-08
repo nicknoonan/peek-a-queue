@@ -34,6 +34,7 @@ func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		tea.RequestBackgroundColor,
 		doTick(),
+		doInitialLoad(),
 	)
 }
 

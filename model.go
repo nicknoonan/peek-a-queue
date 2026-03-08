@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"sync"
+	// "sync"
 	"time"
 
 	"charm.land/bubbles/v2/key"
@@ -11,33 +11,15 @@ import (
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
-type AtomicBool struct {
-	mu sync.RWMutex
-	value bool
-}
-
-func (atomicBool *AtomicBool) Set(value bool) {
-	atomicBool.mu.Lock()
-	defer atomicBool.mu.Unlock()
-	atomicBool.value = value
-}
-
-func (atomicBool *AtomicBool) Get() bool {
-	atomicBool.mu.Lock()
-	defer atomicBool.mu.Unlock()
-	return atomicBool.value
-}
 
 type model struct {
 	awsClient AWSClient
 	styles        styles
 	darkBG        bool
 	width, height int
-	// once          *sync.Once
 	list          list.Model
 	keys          *listKeyMap
 	delegateKeys  *delegateKeyMap
-	isLoading     AtomicBool
 }
 
 
@@ -107,7 +89,7 @@ func initialModel(ctx context.Context) (*model, error) {
 	}
 
 	// Setup list.
-	delegate := newItemDelegate(ctx, &m, &awsClient, delegateKeys, &m.styles)
+	delegate := newItemDelegate(ctx, &awsClient, delegateKeys, &m.styles)
 	queueList := list.New(items, delegate, 0, 0)
 	queueList.Title = "Queues"
 	queueList.Styles.Title = m.styles.title
@@ -147,15 +129,25 @@ func doTick() tea.Cmd {
 	})
 }
 
+type initialLoadMsg string
+
+func doInitialLoad() tea.Cmd {
+	return func() tea.Msg{
+		return initialLoadMsg("")
+	}
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
 	case tickMsg:
 		cmds = append(cmds, 
-			loadPageAttributes(context.TODO(), &m, &m.list, &m.styles, &m.awsClient, m.list.VisibleItems()...),
+			loadPageAttributes(context.TODO(), &m.list, &m.styles, &m.awsClient, m.list.VisibleItems()...),
 			doTick(),
 		)
+	case initialLoadMsg:
+		cmds = append(cmds, loadPageAttributes(context.TODO(), &m.list, &m.styles, &m.awsClient, m.list.VisibleItems()...))
 	case tea.BackgroundColorMsg:
 		m.darkBG = msg.IsDark()
 		m.updateListProperties()
