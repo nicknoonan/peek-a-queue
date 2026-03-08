@@ -129,7 +129,7 @@ func (client AWSClient) GetQueueAttributesCmd(ctx context.Context, allItems []li
 			return curItem.url
 		})
 
-		attributes, err := client.GetQueueAttributesBatch(ctx, urls, []types.QueueAttributeName{types.QueueAttributeNameApproximateNumberOfMessages})
+		attributes, err := client.GetQueueAttributesBatch(ctx, urls, []types.QueueAttributeName{types.QueueAttributeNameApproximateNumberOfMessages, types.QueueAttributeNameApproximateNumberOfMessagesNotVisible})
 		if err != nil {
 			return queueAttributesMsg{
 				err: err,
@@ -138,7 +138,8 @@ func (client AWSClient) GetQueueAttributesCmd(ctx context.Context, allItems []li
 
 		for _, cur := range visibleItems {
 			cur := cur.(item)
-			cur.lengthString = attributes[cur.url][string(types.QueueAttributeNameApproximateNumberOfMessages)]
+			cur.available = attributes[cur.url][string(types.QueueAttributeNameApproximateNumberOfMessages)]
+			cur.inFlight = attributes[cur.url][string(types.QueueAttributeNameApproximateNumberOfMessagesNotVisible)]
 
 			batch = append(batch, batchItem{
 				index:   indexMap[cur.url],
