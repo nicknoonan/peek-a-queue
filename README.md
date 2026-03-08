@@ -4,11 +4,19 @@ Peek-a-Queue is a tiny, cheeky TUI tool that sneaks a peek at your AWS SQS queue
 
 Think of it as a queue inspector that wears a CLI hat.
 
+## Why use this?
+Because clicking through the AWS Console to find your ApproximateNumberOfMessages is a form of digital penance nobody deserves. Peek-a-Queue gives you a bird’s-eye view of your message traffic without the heavy lifting.
+
 ## Features
-- Lists all SQS queues in your account
-- Loads and displays queue attributes on demand
-- Keyboard-driven UI with filtering, pagination, and a help menu
-- Periodic background refreshes of visible queue attributes
+- Zero-Touch Inspection: View Messages Available and Messages In-Flight without accidentally consuming or deleting them.
+
+- Periodic background refreshes: keep your data fresh, so you can watch your queue drain (or pile up) in real-time.
+
+- Filtering: Instantly filter through hundreds of queues to find that one specific dead-letter queue (DLQ) that's currently on fire.
+
+- Keyboard-First: Because your mouse is for Slack, not for infrastructure.
+
+- TUI Magic: Built with the Bubble Tea framework, making it smoother than a buttered slide.
 
 ## Requirements
 - Go 1.20+ (or whatever your project uses)
@@ -16,7 +24,7 @@ Think of it as a queue inspector that wears a CLI hat.
 
 ## Install
 
-From source (recommended during development):
+### From source:
 
 ```bash
 cd /path/to/peek-a-queue
@@ -25,7 +33,7 @@ go build -o peek-a-queue .
 go run .
 ```
 
-Install globally with `go install` (replace with your module path):
+### Global Install:
 
 ```bash
 go install github.com/nicknoonan/peek-a-queue@latest
@@ -37,8 +45,13 @@ peek-a-queue
 
 1. Make sure your AWS credentials are set:
 ```bash
-export AWS_PROFILE=default   # on Windows PowerShell: $env:AWS_PROFILE="default"
-export AWS_REGION=us-east-1  # or set in your profile
+export AWS_PROFILE=default
+export AWS_REGION=us-east-1
+
+# or
+aws login
+
+# idk you've probably got a special way for loading aws creds that sdk can use. just do that.
 ```
 
 2. Run the TUI:
