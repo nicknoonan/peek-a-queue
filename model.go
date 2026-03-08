@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"sync"
+	"time"
 
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/list"
@@ -28,6 +29,7 @@ func (atomicBool *AtomicBool) Get() bool {
 }
 
 type model struct {
+	awsClient AWSClient
 	styles        styles
 	darkBG        bool
 	width, height int
@@ -87,7 +89,9 @@ func initialModel(ctx context.Context) (*model, error) {
 	}
 
 	// Initialize the model and list.
-	m := model{}
+	m := model{
+		awsClient: awsClient,
+	}
 	m.styles = newStyles(false) // default to dark background styles
 
 	delegateKeys := newDelegateKeyMap()
@@ -135,10 +139,23 @@ func (m *model) updateListProperties() {
 	m.list.Styles.Title = m.styles.title
 }
 
+type tickMsg time.Time
+
+func doTick() tea.Cmd {
+	return tea.Tick(10 * time.Second, func(t time.Time) tea.Msg {
+		return tickMsg(t)
+	})
+}
+
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
+	case tickMsg:
+		cmds = append(cmds, 
+			loadPageAttributes(context.TODO(), &m, &m.list, &m.styles, &m.awsClient, m.list.VisibleItems()...),
+			doTick(),
+		)
 	case tea.BackgroundColorMsg:
 		m.darkBG = msg.IsDark()
 		m.updateListProperties()
