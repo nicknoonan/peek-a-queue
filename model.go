@@ -87,11 +87,6 @@ func initialModel(ctx context.Context) (*model, error) {
 
 	awsClient := NewAWSClient(awsConfig)
 
-	queueURLs, err := awsClient.ListAllQueues(ctx)
-	if err != nil {
-		return nil, err
-	}
-
 	// Initialize the model and list.
 	m := model{
 		awsClient: awsClient,
@@ -99,15 +94,6 @@ func initialModel(ctx context.Context) (*model, error) {
 	m.styles = newStyles(false) // default to dark background styles
 
 	listKeys := newListKeyMap()
-
-	// Make initial list of items.
-	items := make([]list.Item, len(queueURLs))
-	for i := range len(queueURLs) {
-		items[i] = item{
-			name: queueNameFromURL(queueURLs[i]),
-			url:  queueURLs[i],
-		}
-	}
 
 	// Setup list.
 	queueList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
@@ -186,7 +172,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.list.StopSpinner()
 		cmds = append(cmds,
 			m.list.SetItems(msg),
-			m.awsClient.GetQueueAttributesCmd(context.TODO(), msg, msg),
+			m.awsClient.GetQueueAttributesCmd(context.TODO(), msg),
 		)
 	case tea.BackgroundColorMsg:
 		m.darkBG = msg.IsDark()
@@ -212,7 +198,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.list.NewStatusMessage(m.styles.statusMessage.Render("error: " + msg.err.Error()))
 		}
 
-		cmds = append(cmds, m.list.setItemsBatchCmd(msg.batch))
+		cmds = append(cmds, m.list.setItemsBatchCmd(msg.itemList))
 	case tea.KeyPressMsg:
 		// Don't match any of the keys below if we're actively filtering.
 		if m.list.FilterState() == list.Filtering {

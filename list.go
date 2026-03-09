@@ -140,18 +140,21 @@ func (lm *listModel) ShowHelp() bool {
 	return lm.bubbleListModel.ShowHelp()
 }
 
-type batchItem struct {
-	index   int
-	setItem item
-}
-
-func (lm *listModel) setItemsBatchCmd(setItemsList []batchItem) tea.Cmd {
+func (lm *listModel) setItemsBatchCmd(listItems []list.Item) tea.Cmd {
 	return tea.Batch(
 		func() tea.Msg {
+			indexMap := make(map[string]int)
+
+			for i, cur := range lm.Items() {
+				cur := cur.(item)
+				indexMap[cur.url] = i
+			}
+
 			var cmds []tea.Cmd
 
-			for _, setItem := range setItemsList {
-				cmds = append(cmds, lm.SetItem(setItem.index, setItem.setItem))
+			for _, cur := range listItems {
+				cur := cur.(item)
+				cmds = append(cmds, lm.SetItem(indexMap[cur.url], cur))
 			}
 
 			return tea.Batch(cmds...)
@@ -168,7 +171,7 @@ func (lm *listModel) loadPageAttributes(ctx context.Context, listItems ...list.I
 
 	cmds = append(cmds,
 		lm.StartSpinner(),
-		lm.awsClient.GetQueueAttributesCmd(ctx, lm.Items(), listItems),
+		lm.awsClient.GetQueueAttributesCmd(ctx, listItems),
 	)
 
 	statusMessage := "refreshing page..."

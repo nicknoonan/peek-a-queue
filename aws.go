@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	// "time"
 
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
@@ -130,21 +131,15 @@ func queueNameFromURL(url string) string {
 }
 
 type queueAttributesMsg struct {
-	batch []batchItem
+	itemList []list.Item
 	err   error
 }
 
-func (client AWSClient) GetQueueAttributesCmd(ctx context.Context, allItems []list.Item, visibleItems []list.Item) tea.Cmd {
+func (client AWSClient) GetQueueAttributesCmd(ctx context.Context, listItems []list.Item) tea.Cmd {
 	return func() tea.Msg {
-		var batch []batchItem
-		indexMap := make(map[string]int)
+		var itemList []list.Item
 
-		for i, cur := range allItems {
-			cur := cur.(item)
-			indexMap[cur.url] = i
-		}
-
-		urls := Map(visibleItems, func(listItem list.Item) string {
+		urls := Map(listItems, func(listItem list.Item) string {
 			curItem := listItem.(item)
 			return curItem.url
 		})
@@ -156,17 +151,14 @@ func (client AWSClient) GetQueueAttributesCmd(ctx context.Context, allItems []li
 			}
 		}
 
-		for _, cur := range visibleItems {
+		for _, cur := range listItems {
 			cur := cur.(item)
 			cur.available = attributes[cur.url][string(types.QueueAttributeNameApproximateNumberOfMessages)]
 			cur.inFlight = attributes[cur.url][string(types.QueueAttributeNameApproximateNumberOfMessagesNotVisible)]
 
-			batch = append(batch, batchItem{
-				index:   indexMap[cur.url],
-				setItem: cur,
-			})
+			itemList = append(itemList, cur)
 		}
 
-		return queueAttributesMsg{batch: batch}
+		return queueAttributesMsg{itemList: itemList}
 	}
 }
