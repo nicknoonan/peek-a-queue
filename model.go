@@ -68,7 +68,6 @@ func initialModel(ctx context.Context) (*model, error) {
 	return &m, nil
 }
 
-
 type refreshTickMsg time.Time
 
 func refreshTick() tea.Cmd {
@@ -77,11 +76,11 @@ func refreshTick() tea.Cmd {
 	})
 }
 
-type initialLoadMsg string
+type initialLoadMsg struct{}
 
 func initialLoad() tea.Cmd {
 	return func() tea.Msg {
-		return initialLoadMsg("")
+		return initialLoadMsg{}
 	}
 }
 
@@ -113,15 +112,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.list.SetItems(msg),
 			m.awsClient.GetQueueAttributesCmd(context.TODO(), msg),
 		)
-	case tea.BackgroundColorMsg:
-		m.darkBG = msg.IsDark()
-		m.updateListProperties()
-		return m, nil
-
-	case tea.WindowSizeMsg:
-		m.width, m.height = msg.Width, msg.Height
-		m.updateListProperties()
-		return m, nil
 	case queueAttributesMsg:
 		m.list.StopSpinner()
 
@@ -138,6 +128,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		cmds = append(cmds, m.list.setItemsBatchCmd(msg.itemList))
+	case tea.BackgroundColorMsg:
+		m.darkBG = msg.IsDark()
+		m.updateListProperties()
+		return m, nil
+
+	case tea.WindowSizeMsg:
+		m.width, m.height = msg.Width, msg.Height
+		m.updateListProperties()
+		return m, nil
 	case tea.KeyPressMsg:
 		// Don't match any of the keys below if we're actively filtering.
 		if m.list.FilterState() == list.Filtering {

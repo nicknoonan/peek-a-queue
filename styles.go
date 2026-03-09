@@ -25,7 +25,6 @@ func newStyles(darkBG bool) styles {
 	}
 }
 
-
 func (m *model) updateListProperties() {
 	// Update list size.
 	h, v := m.styles.app.GetFrameSize()

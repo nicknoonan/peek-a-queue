@@ -131,7 +131,7 @@ func queueNameFromURL(url string) string {
 
 type queueAttributesMsg struct {
 	itemList []list.Item
-	err   error
+	err      error
 }
 
 func (client AWSClient) GetQueueAttributesCmd(ctx context.Context, listItems []list.Item) tea.Cmd {

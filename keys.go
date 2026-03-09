@@ -4,7 +4,6 @@ import (
 	"charm.land/bubbles/v2/key"
 )
 
-
 type listKeyMap struct {
 	toggleSpinner    key.Binding
 	toggleTitleBar   key.Binding
