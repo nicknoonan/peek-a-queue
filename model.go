@@ -68,11 +68,19 @@ func initialModel(ctx context.Context) (*model, error) {
 	return &m, nil
 }
 
-type refreshTickMsg time.Time
+type refreshAllItemsTickMsg time.Time
 
-func refreshTick() tea.Cmd {
+func refreshAllItemsTick() tea.Cmd {
+	return tea.Tick(100*time.Second, func(t time.Time) tea.Msg {
+		return refreshPageTickMsg(t)
+	})
+}
+
+type refreshPageTickMsg time.Time
+
+func refreshPageTick() tea.Cmd {
 	return tea.Tick(10*time.Second, func(t time.Time) tea.Msg {
-		return refreshTickMsg(t)
+		return refreshPageTickMsg(t)
 	})
 }
 
@@ -87,7 +95,8 @@ func initialLoad() tea.Cmd {
 func (m model) Init() tea.Cmd {
 	return tea.Batch(
 		tea.RequestBackgroundColor,
-		refreshTick(),
+		refreshPageTick(),
+		refreshAllItemsTick(),
 		initialLoad(),
 	)
 }
@@ -96,10 +105,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
 	switch msg := msg.(type) {
-	case refreshTickMsg:
+	case refreshPageTickMsg:
 		cmds = append(cmds,
-			m.list.refreshItemAttributes(context.TODO(), m.list.VisibleItems()...),
-			refreshTick(),
+			m.list.StartSpinner(),
+			m.list.refreshItemAttributes(context.TODO(), m.list.PageItems()...),
+			refreshPageTick(),
+		)
+	case refreshAllItemsTickMsg:
+		cmds = append(cmds,
+			m.list.StartSpinner(),
+			m.list.refreshItemAttributes(context.TODO(), m.list.Items()...),
+			refreshAllItemsTick(),
 		)
 	case initialLoadMsg:
 		cmds = append(cmds,
@@ -110,11 +126,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.list.StopSpinner()
 		cmds = append(cmds,
 			m.list.SetItems(msg),
-			m.awsClient.GetQueueAttributesCmd(context.TODO(), msg),
+			m.list.refreshItemAttributes(context.TODO(), msg...),
 		)
 	case queueAttributesMsg:
 		m.list.StopSpinner()
 
+		// reset filter to refresh the list of visible items in the filter state
 		if m.list.IsFiltered() {
 			currentFilter := m.list.FilterValue()
 			currentIndex := m.list.Index()
@@ -158,7 +175,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.refreshItem):
 			cmds = append(cmds, m.list.refreshItemAttributes(context.TODO(), m.list.SelectedItem()))
 		case key.Matches(msg, m.keys.refreshPage):
-			cmds = append(cmds, m.list.refreshItemAttributes(context.TODO(), m.list.VisibleItems()...))
+			cmds = append(cmds, m.list.refreshItemAttributes(context.TODO(), m.list.PageItems()...))
 
 		case key.Matches(msg, m.keys.toggleStatusBar):
 			m.list.SetShowStatusBar(!m.list.ShowStatusBar())
@@ -174,7 +191,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	// This will also call our delegate's update function.
 	newListModel, cmd := m.list.Update(msg)
 	m.list = &newListModel
 	cmds = append(cmds, cmd)

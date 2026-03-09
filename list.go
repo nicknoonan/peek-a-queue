@@ -35,6 +35,19 @@ func (lm *listModel) SetTitleStyle(title lipgloss.Style) {
 	lm.bubbleListModel.Styles.Title = title
 }
 
+func (lm *listModel) PageItems() []list.Item {
+	visibleItems := lm.bubbleListModel.VisibleItems()
+	if len(visibleItems) == 0 {
+		visibleItems = lm.Items()
+	}
+
+	start := lm.bubbleListModel.Paginator.Page*lm.bubbleListModel.Paginator.PerPage
+	end := min(start+lm.bubbleListModel.Paginator.PerPage, max(len(visibleItems),0))
+	visible := visibleItems[start:end]
+
+	return visible
+}
+
 func (lm *listModel) VisibleItems() []list.Item {
 	return lm.bubbleListModel.VisibleItems()
 }
