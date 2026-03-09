@@ -7,22 +7,7 @@ import (
 	"os"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 )
-
-type styles struct {
-	app           lipgloss.Style
-	title         lipgloss.Style
-	statusMessage lipgloss.Style
-}
-
-func (m model) Init() tea.Cmd {
-	return tea.Batch(
-		tea.RequestBackgroundColor,
-		refreshTick(),
-		initialLoad(),
-	)
-}
 
 func main() {
 	ctx := context.Background()

@@ -7,7 +7,6 @@ import (
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	"github.com/aws/aws-sdk-go-v2/config"
 )
 
@@ -18,65 +17,6 @@ type model struct {
 	width, height int
 	list          *listModel
 	keys          *listKeyMap
-}
-
-type listKeyMap struct {
-	toggleSpinner    key.Binding
-	toggleTitleBar   key.Binding
-	toggleStatusBar  key.Binding
-	togglePagination key.Binding
-	toggleHelpMenu   key.Binding
-	insertItem       key.Binding
-	refreshItem      key.Binding
-	refreshPage      key.Binding
-}
-
-func newListKeyMap() *listKeyMap {
-	return &listKeyMap{
-		toggleSpinner: key.NewBinding(
-			key.WithKeys("s"),
-			key.WithHelp("s", "toggle spinner"),
-		),
-		toggleTitleBar: key.NewBinding(
-			key.WithKeys("T"),
-			key.WithHelp("T", "toggle title"),
-		),
-		toggleStatusBar: key.NewBinding(
-			key.WithKeys("S"),
-			key.WithHelp("S", "toggle status"),
-		),
-		togglePagination: key.NewBinding(
-			key.WithKeys("P"),
-			key.WithHelp("P", "toggle pagination"),
-		),
-		toggleHelpMenu: key.NewBinding(
-			key.WithKeys("H"),
-			key.WithHelp("H", "toggle help"),
-		),
-		refreshItem: key.NewBinding(
-			key.WithKeys("enter"),
-			key.WithHelp("enter", "refresh item"),
-		),
-		refreshPage: key.NewBinding(
-			key.WithKeys("r"),
-			key.WithHelp("r", "refresh page"),
-		),
-	}
-}
-
-func newStyles(darkBG bool) styles {
-	lightDark := lipgloss.LightDark(darkBG)
-
-	return styles{
-		app: lipgloss.NewStyle().
-			Padding(1, 2),
-		title: lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#FFFDF5")).
-			Background(lipgloss.Color("#25A065")).
-			Padding(0, 1),
-		statusMessage: lipgloss.NewStyle().
-			Foreground(lightDark(lipgloss.Color("#04B575"), lipgloss.Color("#04B575"))),
-	}
 }
 
 func initialModel(ctx context.Context) (*model, error) {
@@ -128,15 +68,6 @@ func initialModel(ctx context.Context) (*model, error) {
 	return &m, nil
 }
 
-func (m *model) updateListProperties() {
-	// Update list size.
-	h, v := m.styles.app.GetFrameSize()
-	m.list.SetSize(m.width-h, m.height-v)
-
-	// Update the model and list styles.
-	m.styles = newStyles(m.darkBG)
-	m.list.SetTitleStyle(m.styles.title)
-}
 
 type refreshTickMsg time.Time
 
@@ -152,6 +83,14 @@ func initialLoad() tea.Cmd {
 	return func() tea.Msg {
 		return initialLoadMsg("")
 	}
+}
+
+func (m model) Init() tea.Cmd {
+	return tea.Batch(
+		tea.RequestBackgroundColor,
+		refreshTick(),
+		initialLoad(),
+	)
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
