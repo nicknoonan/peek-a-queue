@@ -112,6 +112,7 @@ func initialModel(ctx context.Context) (*model, error) {
 	// Setup list.
 	queueList := list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0)
 	queueList.Title = "Queues"
+	queueList.SetShowTitle(false)
 	queueList.Styles.Title = m.styles.title
 	queueList.AdditionalShortHelpKeys = func() []key.Binding {
 		return []key.Binding{
