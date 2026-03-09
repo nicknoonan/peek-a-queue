@@ -52,13 +52,19 @@ func (client AWSClient) ListAllQueues(ctx context.Context) ([]string, error) {
 	return queueUrls, nil
 }
 
-type queueListMsg []list.Item
+type queueListMsg struct {
+	listItems []list.Item
+	err error
+}
 
 func (client AWSClient) ListAllQueuesCmd(ctx context.Context) tea.Cmd {
 	return func() tea.Msg {
 		queueUrls, err := client.ListAllQueues(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to list queues: %w", err)
+			return queueListMsg{ 
+				err: fmt.Errorf("failed to list queues: %w", err),
+			}
+
 		}
 
 		items := Map(queueUrls, func(url string) list.Item {
@@ -68,7 +74,9 @@ func (client AWSClient) ListAllQueuesCmd(ctx context.Context) tea.Cmd {
 			}
 		})
 
-		return queueListMsg(items)
+		return queueListMsg{
+			listItems: items,
+		}
 	}
 }
 

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"charm.land/bubbles/v2/key"
@@ -124,9 +125,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		)
 	case queueListMsg:
 		m.list.StopSpinner()
+		if msg.err != nil {
+			m.list.bubbleListModel.Title = fmt.Sprintf("error: %s", msg.err.Error())
+			return m, nil
+		}
+		
 		cmds = append(cmds,
-			m.list.SetItems(msg),
-			m.list.refreshItemAttributes(context.TODO(), msg...),
+			m.list.SetItems(msg.listItems),
+			m.list.refreshItemAttributes(context.TODO(), msg.listItems...),
 		)
 	case queueAttributesMsg:
 		m.list.StopSpinner()
@@ -141,7 +147,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if msg.err != nil {
-			return m, m.list.NewStatusMessage(m.styles.statusMessage.Render("error: " + msg.err.Error()))
+			m.list.bubbleListModel.Title = fmt.Sprintf("error: %s", msg.err.Error())
+			return m, nil
 		}
 
 		cmds = append(cmds, m.list.setItemsBatchCmd(msg.itemList))
