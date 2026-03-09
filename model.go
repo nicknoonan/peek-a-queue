@@ -160,7 +160,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case refreshTickMsg:
 		cmds = append(cmds,
-			m.list.loadPageAttributes(context.TODO(), m.list.VisibleItems()...),
+			m.list.refreshItemAttributes(context.TODO(), m.list.VisibleItems()...),
 			refreshTick(),
 		)
 	case initialLoadMsg:
@@ -218,9 +218,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 
 		case key.Matches(msg, m.keys.refreshItem):
-			cmds = append(cmds, m.list.loadPageAttributes(context.TODO(), m.list.SelectedItem()))
+			cmds = append(cmds, m.list.refreshItemAttributes(context.TODO(), m.list.SelectedItem()))
 		case key.Matches(msg, m.keys.refreshPage):
-			cmds = append(cmds, m.list.loadPageAttributes(context.TODO(), m.list.VisibleItems()...))
+			cmds = append(cmds, m.list.refreshItemAttributes(context.TODO(), m.list.VisibleItems()...))
 
 		case key.Matches(msg, m.keys.toggleStatusBar):
 			m.list.SetShowStatusBar(!m.list.ShowStatusBar())

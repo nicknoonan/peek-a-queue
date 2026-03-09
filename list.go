@@ -162,7 +162,7 @@ func (lm *listModel) setItemsBatchCmd(listItems []list.Item) tea.Cmd {
 	)
 }
 
-func (lm *listModel) loadPageAttributes(ctx context.Context, listItems ...list.Item) tea.Cmd {
+func (lm *listModel) refreshItemAttributes(ctx context.Context, listItems ...list.Item) tea.Cmd {
 	if len(listItems) == 0 || (len(listItems) == 1 && listItems[0] == nil) {
 		return nil
 	}
